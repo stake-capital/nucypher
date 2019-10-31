@@ -34,7 +34,8 @@ sudo apt-get install python3-virtualenv
 sudo apt install python3-pip
 pip3 install virtualenv
 
-# NOTE: may need to restart session here
+# NOTE: may need to restart session here, then run:
+#       source /opt/nucypher/nucypher-venv/bin/activate
 
 sudo mkdir /opt/nucypher
 
@@ -48,5 +49,20 @@ sudo pip3 install -U nucypher
 # Initialize Ursula
 sudo nucypher ursula init --provider ipc:///root/.ethereum/goerli/geth.ipc --poa --staker-address 0x87c0915e34e89628d33ce98588a400c1c0fa4f41
 
-# Run Ursula
-sudo nucypher ursula run --teacher discover.nucypher.network:9151 --interactive
+# Setup systemd service to run Ursula
+echo "[Unit]
+Description=\"Run 'Ursula', a NuCypher Staking Node.\"
+
+[Service]
+User=root
+Type=simple
+Environment=\"NUCYPHER_KEYRING_PASSWORD=<KEYRING-PASSWORD>\"
+Environment=\"NUCYPHER_WORKER_ETH_PASSWORD=<GETH-ETH-PASSWORD>\"
+ExecStart=/usr/local/bin/nucypher ursula run --teacher discover.nucypher.network:9151 --config-file /home/ubuntu/.local/share/nucypher/ursula.json
+
+[Install]
+WantedBy=multi-user.target" > ursula.service
+
+sudo mv ursula.service /etc/systemd/system/
+sudo systemctl enable ursula.service
+sudo systemctl start ursula.service
